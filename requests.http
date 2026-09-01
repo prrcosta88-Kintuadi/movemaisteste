@@ -1,0 +1,95 @@
+### Requisições de exemplo.
+### Abra este arquivo no IntelliJ (HTTP Client) ou no VS Code (extensão "REST Client")
+### e clique em "Send Request" acima de cada bloco. Ou copie os curl equivalentes.
+
+@host = http://localhost:8080
+@carteira = 00000000-0000-0000-0000-000000000001
+@carteiraSaldoBaixo = 00000000-0000-0000-0000-000000000002
+
+
+### 1. Consultar carteira (JÁ IMPLEMENTADO no starter)
+GET {{host}}/api/v1/wallets/{{carteira}}
+
+
+### 2. Criar um pedido
+POST {{host}}/api/v1/orders
+Content-Type: application/json
+Idempotency-Key: minha-chave-001
+
+{
+  "walletId": "{{carteira}}",
+  "items": [
+    { "sku": "SKU-TECLADO", "quantity": 2 },
+    { "sku": "SKU-MOUSE",   "quantity": 1 }
+  ]
+}
+
+
+### 3. Repetir a MESMA requisição com a MESMA chave -> 200 com o mesmo pedido, sem novo débito
+POST {{host}}/api/v1/orders
+Content-Type: application/json
+Idempotency-Key: minha-chave-001
+
+{
+  "walletId": "{{carteira}}",
+  "items": [
+    { "sku": "SKU-TECLADO", "quantity": 2 },
+    { "sku": "SKU-MOUSE",   "quantity": 1 }
+  ]
+}
+
+
+### 4. Mesma chave com payload diferente -> 409 IDEMPOTENCY_KEY_CONFLICT
+POST {{host}}/api/v1/orders
+Content-Type: application/json
+Idempotency-Key: minha-chave-001
+
+{
+  "walletId": "{{carteira}}",
+  "items": [
+    { "sku": "SKU-MOUSE", "quantity": 5 }
+  ]
+}
+
+
+### 5. Saldo insuficiente -> 422 INSUFFICIENT_BALANCE
+POST {{host}}/api/v1/orders
+Content-Type: application/json
+Idempotency-Key: minha-chave-002
+
+{
+  "walletId": "{{carteiraSaldoBaixo}}",
+  "items": [
+    { "sku": "SKU-MONITOR", "quantity": 1 }
+  ]
+}
+
+
+### 6. Produto inativo -> 422 PRODUCT_INACTIVE
+POST {{host}}/api/v1/orders
+Content-Type: application/json
+Idempotency-Key: minha-chave-003
+
+{
+  "walletId": "{{carteira}}",
+  "items": [
+    { "sku": "SKU-ADAPTADOR", "quantity": 1 }
+  ]
+}
+
+
+### 7. Cancelar um pedido -> 204 (troque o UUID pelo id devolvido no passo 2)
+POST {{host}}/api/v1/orders/COLE-AQUI-O-ID-DO-PEDIDO/cancellation
+
+
+### 8. Listar pedidos da carteira
+GET {{host}}/api/v1/orders?walletId={{carteira}}&page=0&size=20
+
+
+### 9. Listar apenas os cancelados
+GET {{host}}/api/v1/orders?walletId={{carteira}}&status=CANCELLED
+
+
+### 10. Console do banco (abra no navegador)
+### http://localhost:8080/h2-console
+### JDBC URL: jdbc:h2:mem:orders   |   User: sa   |   Password: (vazio)

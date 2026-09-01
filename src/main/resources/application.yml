@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: desafio-backend-pleno
+
+  datasource:
+    # Banco em memória: some quando a aplicação para. Zero setup.
+    # LOCK_TIMEOUT alto de propósito: o requisito de concorrência não pode falhar
+    # por timeout de lock do H2 numa máquina lenta.
+    url: jdbc:h2:mem:orders;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=10000
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    # necessário para o data.sql rodar DEPOIS de o Hibernate criar as tabelas
+    defer-datasource-initialization: true
+    # desligado de propósito: sessão JPA não fica aberta na camada web.
+    # Se você tocar em coleção LAZY fora do serviço transacional, vai estourar
+    # LazyInitializationException — e isso é intencional.
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  sql:
+    init:
+      mode: always
+      encoding: UTF-8
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: 8080
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    # descomente para ver os parâmetros ligados a cada SQL
+    # org.hibernate.orm.jdbc.bind: trace
